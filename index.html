@@ -1,0 +1,184 @@
+<!doctype html>
+<!-- Copyright (c) 2019-2021 Dawid Kurek <dawikur@gmail.com> -->
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+
+	<title>Meteogram</title>
+
+	<meta name="description" content="Meteogram">
+	<meta name="author"      content="Dawid Kurek">
+
+	<link rel="shortcut icon" type="image/png" href="https://m.meteo.pl/img/favicon.ico">
+
+	<style type="text/css">
+		body {
+			background-color: #FFFBF0;
+			font-family: Arial;
+			font-size: 12px;
+
+			margin: 0px;
+			padding: 0px;
+		}
+
+		table {
+			border-collapse: separate;
+			border-spacing: 15px;
+		}
+
+		img {
+			padding: 5px;
+		}
+
+		.box {
+			box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2),
+			            0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		}
+
+		.box:hover {
+			box-shadow: 0 4px 8px 0 rgba(0, 0, 10, 0.3),
+			            0 6px 20px 0 rgba(0, 0, 0, 0.29);
+		}
+
+		.vertical {
+			transform: rotate(-90deg);
+		}
+
+		#shadow {
+			position: absolute;
+			top: -5px;
+			left: 0px;
+			width: 100%;
+			height: 1px;
+			box-shadow: 0 4px 8px 0 rgba(0, 0, 10, 0.3),
+			            0 6px 20px 0 rgba(0, 0, 0, 0.89);
+		}
+
+	</style>
+
+	<script type="text/javascript">
+		window.onload = function() {
+			window.meteo = JSON.parse(window.localStorage["meteo"] || "{}");
+
+			window.meteo["add"] = function(id, key, value) {
+				if (! (id in window.meteo)) {
+					window.meteo[id] = {
+						collapsed: true,
+					};
+				}
+
+				window.meteo[id][key] = value;
+
+				window.localStorage["meteo"] = JSON.stringify(window.meteo);
+				window.location.reload("true");
+			};
+
+			window.meteo["remove"] = function(id, key) {
+				if (key !== undefined) {
+					delete window.meteo[id][key];
+				} else {
+					delete window.meteo[id];
+				}
+
+				window.localStorage["meteo"] = JSON.stringify(window.meteo);
+				window.location.reload("true");
+			}
+
+			for (let id in window.meteo) {
+				let entry = window.meteo[id];
+
+				if (typeof entry === 'function') {
+					continue;
+				}
+
+				let hide = (entry.collapsed ? "none" : "block");
+				let show = (entry.collapsed ? "block" : "none");
+
+				{
+					let th = document.createElement("th");
+					th.classList.add(id);
+					th.height = document.getElementById("headers").offsetHeight;
+
+					document.getElementById("headers").appendChild(th);
+
+					if (id) {
+						let node = document.createTextNode(id);
+
+						let p = document.createElement("p");
+						p.classList.add("toogleable");
+						p.style.display = hide;
+						p.appendChild(node);
+
+						th.appendChild(p);
+					}
+				}
+
+				{
+					let th = document.createElement("th");
+					th.classList.add(id, "box");
+					th.onclick = function() {
+						let toogleables = document.querySelectorAll("." + id + " .toogleable");
+						toogleables.forEach(function(toogleable) {
+							if (toogleable.style.display === "none") {
+								toogleable.style.display = "block";
+							} else {
+								toogleable.style.display = "none";
+							}
+						});
+					};
+
+					document.getElementById("graphs").appendChild(th);
+
+					if (id) {
+						let node = document.createTextNode(id);
+
+						let p = document.createElement("p");
+						p.classList.add("vertical", "toogleable");
+						p.style.display = show;
+						p.appendChild(node);
+
+						th.appendChild(p);
+					}
+
+					["img", "iframe"].forEach(function(type) {
+						if (!entry[type]) {
+							return;
+						}
+
+						let element = document.createElement(type);
+						element.alt = id + " " + type;
+						element.classList.add("toogleable");
+						element.style.border = "none";
+						element.style.display = hide;
+
+						element.src = entry[type];
+
+						element.onload = function() {
+							th.height = document.getElementById("graphs").offsetHeight;
+						};
+
+						th.appendChild(element);
+					});
+				}
+			};
+		};
+	</script>
+</head>
+
+<body>
+
+	<div id="shadow">
+	</div>
+
+	<table>
+		<tr id="headers">
+		</tr>
+
+		<tr id="graphs">
+		</tr>
+	</table>
+
+</body>
+
+</html>
