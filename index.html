@@ -59,7 +59,14 @@
 
 	<script type="text/javascript">
 		window.onload = function() {
-			window.meteo = JSON.parse(window.localStorage["meteo"] || "{}");
+			let get = function() {
+				return window.localStorage["meteo"] || "{}";
+			};
+			let set = function(meteo) {
+				window.localStorage["meteo"] = meteo;
+			};
+
+			window.meteo = JSON.parse(get());
 
 			window.meteo["add"] = function(id, key, value) {
 				if (! (id in window.meteo)) {
@@ -70,8 +77,7 @@
 
 				window.meteo[id][key] = value;
 
-				window.localStorage["meteo"] = JSON.stringify(window.meteo);
-				window.location.reload("true");
+				meteo.save();
 			};
 
 			window.meteo["remove"] = function(id, key) {
@@ -81,8 +87,16 @@
 					delete window.meteo[id];
 				}
 
-				window.localStorage["meteo"] = JSON.stringify(window.meteo);
+				meteo.save();
+			};
+
+			window.meteo["save"] = function() {
+				set(JSON.stringify(window.meteo));
 				window.location.reload("true");
+			};
+
+			window.meteo["print"] = function() {
+				console.log(get());
 			}
 
 			for (let id in window.meteo) {
@@ -102,7 +116,7 @@
 
 					document.getElementById("headers").appendChild(th);
 
-					if (id) {
+					{
 						let node = document.createTextNode(id);
 
 						let p = document.createElement("p");
@@ -130,7 +144,7 @@
 
 					document.getElementById("graphs").appendChild(th);
 
-					if (id) {
+					{
 						let node = document.createTextNode(id);
 
 						let p = document.createElement("p");
